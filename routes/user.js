@@ -1,7 +1,11 @@
 const express=require('express')
-const {user} =require('../db')
+const {user,marks} =require('../db')
+
 const app=express()
-const zod=require('zod')
+
+
+
+const { createuser, updatebody, MarksValidate } = require('../validation/index')
 
 const router=express.Router()
 
@@ -10,71 +14,140 @@ router.get('/user',async (req,res)=>{
     const users= await user.find({})
 
    return res.send({
-       users: users.map(user=>({
-            username:user.username,
-            password:user.password
-        }))
+      users
     })
 
 })
 
-const createuser=zod.object({
-    username:zod.string(),
-    password:zod.string()
-})
+
 
 router.post('/post',async (req,res)=>{
-    const {success}=createuser.safeParse(req.body)
 
-    if(!success){
-        res.status(411).json({
-            msg:"wrong inputs"
+    try{
+        const value=await createuser.validateAsync(req.body)
+
+    
+
+
+        await user.create({
+         firstname:req.body.firstname,
+         lastname:req.body.lastname,
+         email:req.body.email,
+        
+         phonenumber:req.body.phonenumber
+    
         })
+       return res.json({
+                msg:"user created",
+                // token:token
+        })
+    }catch(error){
+        return res.status(400).send(error.message)
     }
-
-    await user.create({
-        username:req.body.username,
-        password:req.body.password
-
-    })
-   return res.json({
-            msg:"user created"
-    })
+   
 })
 
-const updatebody=zod.object({
-    username:zod.string(),
-    password:zod.string()
-})
 
-router.put('/update',async(req,res)=>{
-    const {success}=updatebody.safeParse(req.body)
-    if(!success){
-        return res.json({
-            msg:"invalid inputs"
-        })
-    }
-    const existinguser=await user.findOne({username:req.body.username})
-    if(!existinguser){
-        return res.status(401).json({
-            msg:"invalid user"
-        })
-    }
-    const filter={username:req.body.username}
-    const password={password:req.body.password}
 
-    await user.findOneAndUpdate(filter,password)
+router.put('/update', async (req, res) => {
+  try {
+    const data = await updatebody.validateAsync(req.body);
+
+    const id = req.query.id;
+    const existingUser = await user.findOne({ _id: id });
+
+    if (!existingUser) {
+      return res.status( ).json({
+        msg: 'User does not exist',
+      });
+    }
+
+    const filter = { _id: id };
+    const updatedBody = {
+      
+      phonenumber: req.body.phonenumber,
+      email: req.body.email,
+    };
+
+    await user.findOneAndUpdate(filter, updatedBody);
 
     return res.json({
-        msg:"updated"
-    })
+      msg: 'Updated',
+    });
+  } catch (error) {
+    
 
-})
+      return res.status(400).send(error.message)
+       
+    
+    
+  
+}
+});
+
+router.post('/updateMarks', async (req, res) => {
+  try {
+    const data = await MarksValidate.validateAsync(req.body);
+
+    const id = req.query.id;
+    const existingUser = await user.findOne({ _id: id });
+
+    if (!existingUser) {
+      return res.status(404).json({
+        msg: 'User does not exist',
+      });
+    }
+
+    // const filter = { _id: id };
+    // const updatedBody = {
+    //   marks: req.body.marks,
+    //   subject:req.body.subject,
+    // //   phonenumber: req.body.phonenumber,
+    // //   email: req.body.email,
+    // };
+    let dataa = await marks.create({
+       id: req.query.id,
+        subject:req.body.subject,
+        marks:req.body.marks
+
+    })
+console.log(dataa)
+    // await user.findOneAndUpdate(filter, updatedBody);
+
+    return res.status(200).json({
+      msg: 'marks updated',
+    });
+  } catch (error) {
+    
+
+      return res.status(400).send(error.message)
+       
+    
+    
+  
+}
+});
+
+
+
+
+
+
+
+ 
 
 router.delete('/delete',async (req,res)=>{
-    const username={username:req.body.username}
+    const id={_id:req.query.id}
 
-    await user.deleteOne(username)
+    const existingUser = await user.findOne({ _id: id });
+
+    if (!existingUser) {
+      return res.status( ).json({
+        msg: 'User does not exist',
+      });
+    }
+
+    await user.deleteOne(id)
 
    return res.send({
         msg:"delete"

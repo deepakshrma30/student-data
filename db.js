@@ -1,23 +1,56 @@
 const mongoose=require('mongoose')
 
-mongoose.connect("mongodb+srv://DeepakSharma:mydatabase@database.te5tgcw.mongodb.net/practice")
+
 
 
 
 const UserSchema= new mongoose.Schema({
-    username:{
+    firstname:{
         type:String,
         required:true
     },
-    password:{
+    lastname:{
         type:String,
         required:true
+    },
+    email:{
+        type:String,
+        required:true
+    },
+    marks:{
+        type:Number
+    },
+    phonenumber:{
+        type:Number,
+        required:true
+    },
+    subject:{
+        type:String,
+
+    }
+    
+})
+
+const MarksSchema=new mongoose.Schema({
+
+    id:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'user'
+    },
+
+    subject:{
+        type:String
+    },
+    marks:{
+        type:Number
     }
 })
 
-const user= mongoose.model('user',UserSchema)
 
+const user= mongoose.model('user',UserSchema)
+const marks=mongoose.model('marks',MarksSchema)
 
 module.exports={
-    user
+    user,
+    marks
 }
